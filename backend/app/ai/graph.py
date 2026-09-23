@@ -1,17 +1,23 @@
-from typing import Any, cast
-
+from typing import Any
 from pydantic import SecretStr
 from langchain_groq import ChatGroq
 from langgraph.graph import END, START, StateGraph
 
 from app.ai.prompts import (
-    EXTRACTION_SYSTEM_PROMPT, IMPACT_SYSTEM_PROMPT, SEVERITY_SYSTEM_PROMPT,
+    EXTRACTION_SYSTEM_PROMPT,
+    IMPACT_SYSTEM_PROMPT,
+    SEVERITY_SYSTEM_PROMPT,
 )
 from app.ai.schemas import (
-    DeviationExtraction, ImpactAssessment, SeverityAssessment,
+    DeviationExtraction,
+    ImpactAssessment,
+    SeverityAssessment,
 )
 from app.ai.state import DeviationState
+from app.ai.retry import retry
 from app.config import settings
+from app.services.text_normalizer import normalize_text
+
 
 llm = ChatGroq(
     model=settings.groq_model,
@@ -19,31 +25,40 @@ llm = ChatGroq(
     temperature=0,
 )
 
-extraction_llm = llm.with_structured_output(DeviationExtraction)
 
-impact_llm = llm.with_structured_output(ImpactAssessment)
+extraction_llm = llm.with_structured_output(
+    DeviationExtraction
+)
 
-severity_llm = llm.with_structured_output(SeverityAssessment)
+impact_llm = llm.with_structured_output(
+    ImpactAssessment
+)
 
-
-def _as_dict(value):
-    if value is None:
-        return {}
-    if hasattr(value, "model_dump"):
-        return value.model_dump()
-    if hasattr(value, "dict"):
-        return value.dict()
-    if isinstance(value, dict):
-        return value
-    return {"value": value}
+severity_llm = llm.with_structured_output(
+    SeverityAssessment
+)
 
 
 def extract_deviation(
     state: DeviationState,
 ) -> DeviationState:
-    source_text = state.get('source_text', '')
+    source_text = normalize_text(
+        state.get("source_text") or ""
+    )
 
-    prompt = f"""
+    if not source_text:
+        raise ValueError(
+            "Source material is empty."
+        )
+
+    if len(source_text) > settings.max_source_characters:
+        raise ValueError(
+            "Source material exceeds the maximum "
+            "allowed length."
+        )
+
+    def run():
+        prompt = f"""
 {EXTRACTION_SYSTEM_PROMPT}
 
 SOURCE MATERIAL:
@@ -51,20 +66,32 @@ SOURCE MATERIAL:
 {source_text}
 """
 
-    result = extraction_llm.invoke(prompt)
-    result_data = _as_dict(result)
+        raw_result: Any = extraction_llm.invoke(
+            prompt
+        )
+
+        result = DeviationExtraction.model_validate(
+            raw_result
+        )
+
+        return result
+
+    result = retry(run)
 
     return {
-        **state, "extracted_data": result_data,
+        **state,
+        "source_text": source_text,
+        "extracted_data": result.model_dump(),
     }
 
 
 def assess_impact(
     state: DeviationState,
 ) -> DeviationState:
-    extracted = state.get("extracted_data", {})
+    extracted = state.get("extracted_data")
 
-    prompt = f"""
+    def run():
+        prompt = f"""
 {IMPACT_SYSTEM_PROMPT}
 
 DEVIATION INFORMATION:
@@ -72,17 +99,20 @@ DEVIATION INFORMATION:
 {extracted}
 """
 
-    result = impact_llm.invoke(prompt)
-    result_data = _as_dict(result)
+        raw_result: Any = impact_llm.invoke(
+            prompt
+        )
 
-    # Ensure we return plain strings for fields expected by DeviationState
-    impact = cast(str, result_data.get("impact") or "")
-    impact_reason = cast(str, result_data.get("reason") or "")
+        return ImpactAssessment.model_validate(
+            raw_result
+        )
+
+    result = retry(run)
 
     return {
         **state,
-        "impact": impact,
-        "impact_reason": impact_reason,
+        "impact": result.impact,
+        "impact_reason": result.reason,
     }
 
 
@@ -91,7 +121,8 @@ def assess_severity(
 ) -> DeviationState:
     extracted = state.get("extracted_data")
 
-    prompt = f"""
+    def run():
+        prompt = f"""
 {SEVERITY_SYSTEM_PROMPT}
 
 DEVIATION INFORMATION:
@@ -107,17 +138,22 @@ IMPACT REASON:
 {state.get("impact_reason", "")}
 """
 
-    result = severity_llm.invoke(prompt)
-    result_data = _as_dict(result)
+        raw_result: Any = severity_llm.invoke(
+            prompt
+        )
 
-    severity = cast(str, result_data.get("severity") or "")
-    severity_reason = cast(str, result_data.get("reason") or "")
+        return SeverityAssessment.model_validate(
+            raw_result
+        )
+
+    result = retry(run)
 
     return {
         **state,
-        "severity": severity,
-        "severity_reason": severity_reason,
+        "severity": result.severity,
+        "severity_reason": result.reason,
     }
+
 
 def build_deviation_graph():
     graph = StateGraph(DeviationState)

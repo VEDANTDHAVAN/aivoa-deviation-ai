@@ -30,15 +30,21 @@ async def analyze_deviation(
 
         if not source_text:
             raise HTTPException(
-                status_code=400, detail=(
+                status_code=400, detail={
+                    "code": "EMPTY_INPUT",
+                    "message": (
                     "Provide deviation text or upload "
                     "a PDF, DOCX, or TXT file."
-                ),
+                    ),
+                },
             )
 
-        if len(source_text) < 20:
+        if len(source_text.strip()) < 20:
             raise HTTPException(
-                status_code=400, detail="The provided source material is too short.",
+                status_code=400, detail={
+                    "code": "INSUFFICIENT_INPUT", "message": 
+                        "Provide enough deviation information for AI analysis."
+                },
             )
 
         result = deviation_graph.invoke(
@@ -62,7 +68,22 @@ async def analyze_deviation(
     except HTTPException:
         raise
 
-    except Exception as exc:
+    except ValueError as exc:
         raise HTTPException(
-            status_code=500, detail=f"AI analysis failed: {str(exc)}",
+            status_code=400, detail={
+                "code": "INVALID_INPUT",
+                "message": str(exc),
+            },
+        ) from exc
+
+    except Exception as exc:
+        print("Deviation analysis error:", repr(exc))
+
+        raise HTTPException(
+            status_code=502, detail={
+                "code": "AI_ANALYSIS_FAILED",
+                "message": (
+                    "The AI analysis could not be completed. Please retry."
+                ),
+            },
         ) from exc

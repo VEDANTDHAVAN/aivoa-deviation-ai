@@ -1,0 +1,17 @@
+Deviation Report
+
+Date: 20 September 2026
+
+Site: API Manufacturing Unit
+
+Product: API-ABC
+
+Batch: B2026-091
+
+During manufacturing, reactor temperature reached 82°C.
+The approved operating range is 75°C to 80°C.
+
+The excursion lasted approximately 18 minutes.
+The event was detected during routine monitoring.
+
+The batch was placed on hold pending investigation.
