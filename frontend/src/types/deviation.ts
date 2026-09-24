@@ -14,8 +14,9 @@ export interface Deviation {
 
 export interface AIAssessment {
   impact: string;
+  impact_reason: string;
   severity: Severity;
-  reason: string;
+  severity_reason: string;
 }
 
 export interface AnalysisResult {
