@@ -1,4 +1,5 @@
 from io import BytesIO
+from zipfile import BadZipFile
 
 from docx import Document
 from pypdf import PdfReader
@@ -11,7 +12,19 @@ def parse_text(text: str) -> str:
     return text.strip()
 
 def parse_pdf(content: bytes) -> str:
-    reader = PdfReader(BytesIO(content))
+    if not content.lstrip().startswith(b"%PDF-"):
+        raise ValueError(
+            "The uploaded file is not a valid PDF. "
+            "Please upload a PDF file or choose the correct file type."
+        )
+
+    try:
+        reader = PdfReader(BytesIO(content))
+    except Exception as exc:
+        raise ValueError(
+            "The uploaded PDF could not be read. "
+            "Please upload a valid, uncorrupted PDF."
+        ) from exc
 
     pages = []
 
@@ -24,7 +37,13 @@ def parse_pdf(content: bytes) -> str:
     return "\n\n".join(pages).strip()
 
 def parse_docx(content: bytes) -> str:
-    document = Document(BytesIO(content))
+    try:
+        document = Document(BytesIO(content))
+    except (BadZipFile, ValueError, KeyError) as exc:
+        raise ValueError(
+            "The uploaded DOCX file could not be read. "
+            "Please upload a valid, uncorrupted DOCX file."
+        ) from exc
 
     paragraphs = [
         paragraph.text.strip()

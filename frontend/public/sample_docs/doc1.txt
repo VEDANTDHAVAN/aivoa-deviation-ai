@@ -1,0 +1,10 @@
+Subject: Deviation Report – Out-of-Range pH During API Manufacturing
+Site: Hyderabad Manufacturing Facility
+Date of Occurrence: 24 September 2026
+Product/Material: API-207
+Batch/Lot Number: API207-240926
+Source: Batch Manufacturing Record  
+During the final processing stage of API-207 batch API207-240926, the process solution pH was observed at 6.8, outside the approved operating range of 7.2–7.6.
+The deviation was identified during routine in-process testing. The operator immediately notified the production supervisor and stopped further processing. The pH meter calibration status was verified and found to be within calibration requirements. The batch was placed on hold pending Quality Assurance investigation.
+Approximately 1200 L of material was affected. No abnormal appearance was observed during the initial inspection. The process records, analytical results, and equipment history are being reviewed to determine the cause and potential impact on product quality.
+Potential impact: The pH excursion may affect process performance and product quality attributes. Further investigation and analytical evaluation are required before batch disposition.
