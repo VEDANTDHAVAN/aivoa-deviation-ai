@@ -52,6 +52,67 @@ button {
   gap: 12px;
 }
 
+.brand-link {
+  color: inherit;
+  text-decoration: none;
+}
+
+.nav-links {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-left: auto;
+}
+
+.nav-link {
+  color: #687386;
+  text-decoration: none;
+  padding: 9px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.nav-link:hover,
+.nav-link-active {
+  color: #172033;
+  background: #f0f2f7;
+}
+
+.page-actions {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  flex-wrap: wrap;
+}
+
+.contextual-link {
+  color: #4d5ec8;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  background: none;
+  border: 0;
+  padding: 0;
+}
+
+.contextual-link:hover {
+  text-decoration: underline;
+}
+
+.not-found h1 {
+  margin-bottom: 8px;
+}
+
+.not-found p {
+  color: #727c8d;
+  margin-bottom: 22px;
+}
+
+.edit-panel {
+  max-width: 900px;
+}
+
 .brand-mark {
   width: 36px;
   height: 36px;
@@ -651,5 +712,17 @@ td strong {
 
   .topbar {
     padding: 0 16px;
+    height: auto;
+    min-height: 72px;
+    gap: 12px;
+    flex-wrap: wrap;
+    padding-top: 12px;
+    padding-bottom: 12px;
+  }
+
+  .nav-links {
+    width: 100%;
+    margin-left: 0;
+    justify-content: flex-end;
   }
 }

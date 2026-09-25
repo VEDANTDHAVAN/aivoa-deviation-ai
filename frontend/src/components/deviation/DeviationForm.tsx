@@ -23,12 +23,21 @@ export default function DeviationForm() {
         (state) => state.deviation.savedDeviationId
     );
 
+    const hasAiDraft = useAppSelector(
+        (state) => Boolean(state.deviation.aiDraft)
+    );
+
     return (
         <div className="deviation-form">
             <div className="section-heading">
                 <h2>Log Deviation</h2>
-                <p>Review and edit the AI-extracted information.</p>
+                <p>Review and edit the AI-generated information before saving.</p>
             </div>
+            {!hasAiDraft && (
+                <div className="error-box">
+                    Analyze a deviation document or text with the AI assistant before saving.
+                </div>
+            )}
             <div className="field">
                 <label>Site</label>
                 <input
@@ -106,7 +115,7 @@ export default function DeviationForm() {
             </select>
          </div>
          <div className="form-actions">
-            <button className="primary-button" disabled={isSaving}
+            <button className="primary-button" disabled={isSaving || !hasAiDraft}
              onClick={() => dispatch(saveCurrentDeviation())}
             >
                 {isSaving ? "Saving..." : "Save Deviation"}

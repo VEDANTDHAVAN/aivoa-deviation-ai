@@ -9,7 +9,6 @@ import {
 } from "../../app/hooks";
 
 import {
-  applyAIResults,
   runDeviationAnalysis,
   setSelectedFileName,
   setSourceText,
@@ -269,16 +268,9 @@ export default function AIAssistant() {
           </div>
 
 
-          <button
-            className="secondary-button"
-            onClick={() =>
-              dispatch(
-                applyAIResults()
-              )
-            }
-          >
-            Apply AI Results
-          </button>
+          <p className="ai-review-note">
+            AI-generated values have been populated in the Log Deviation form. Review and edit them before saving.
+          </p>
 
         </div>
       )}

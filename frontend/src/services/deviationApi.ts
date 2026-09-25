@@ -18,7 +18,20 @@ const api = axios.create({
 
 interface AnalyzeResponse {
   success: boolean;
-  data: AnalysisResult;
+  data: {
+    deviation: {
+      site: string;
+      date_of_occurrence: string;
+      title: string;
+      source: string;
+      product_material: string;
+      batch_lot_number: string;
+      description: string;
+      initial_impact: string;
+      initial_severity: "Critical" | "Major" | "Minor" | null;
+    };
+    assessment: AIAssessment;
+  };
 }
 
 export async function analyzeDeviation(
@@ -41,23 +54,17 @@ export async function analyzeDeviation(
       formData
     );
 
-  return response.data.data;
+  return {
+    deviation: mapAnalysisDeviation(response.data.data.deviation),
+    assessment: response.data.data.assessment,
+  };
 }
 
 export async function saveDeviation(
-  deviation: Deviation
+  deviation: Deviation,
+  assessment?: AIAssessment | null,
 ): Promise<DeviationResponse> {
-  const payload = {
-    site: deviation.site,
-    date_of_occurrence: deviation.dateOfOccurrence,
-    title: deviation.title,
-    source: deviation.source,
-    product_material: deviation.productMaterial,
-    batch_lot_number: deviation.batchLotNumber,
-    description: deviation.description,
-    initial_impact: deviation.initialImpact,
-    initial_severity: deviation.initialSeverity,
-  };
+  const payload = toDeviationPayload(deviation, assessment);
 
   const response = await api.post(
     "/api/deviations",
@@ -80,8 +87,40 @@ export async function getDeviation(id: number): Promise<DeviationResponse> {
 }
 
 export async function updateDeviation(id: number, deviation: Deviation, assessment?: AIAssessment | null): Promise<DeviationResponse> {
-  const response = await api.put(`/api/deviations/${id}`, { ...deviation, ai_impact: assessment?.impact ?? null, ai_impact_reason: assessment?.impact_reason ?? null, ai_severity: assessment?.severity ?? null, ai_severity_reason: assessment?.severity_reason ?? null });
+  const response = await api.put(`/api/deviations/${id}`, toDeviationPayload(deviation, assessment));
   return mapDeviation(response.data);
+}
+
+function mapAnalysisDeviation(data: AnalyzeResponse["data"]["deviation"]): Deviation {
+  return {
+    site: data.site ?? "",
+    dateOfOccurrence: data.date_of_occurrence ?? "",
+    title: data.title ?? "",
+    source: data.source ?? "",
+    productMaterial: data.product_material ?? "",
+    batchLotNumber: data.batch_lot_number ?? "",
+    description: data.description ?? "",
+    initialImpact: data.initial_impact ?? "",
+    initialSeverity: data.initial_severity ?? "",
+  };
+}
+
+function toDeviationPayload(deviation: Deviation, assessment?: AIAssessment | null) {
+  return {
+    site: deviation.site,
+    date_of_occurrence: deviation.dateOfOccurrence,
+    title: deviation.title,
+    source: deviation.source,
+    product_material: deviation.productMaterial,
+    batch_lot_number: deviation.batchLotNumber,
+    description: deviation.description,
+    initial_impact: deviation.initialImpact,
+    initial_severity: deviation.initialSeverity,
+    ai_impact: assessment?.impact ?? null,
+    ai_impact_reason: assessment?.impact_reason ?? null,
+    ai_severity: assessment?.severity ?? null,
+    ai_severity_reason: assessment?.severity_reason ?? null,
+  };
 }
 
 function mapDeviation(
@@ -100,5 +139,9 @@ function mapDeviation(
     initialSeverity: data.initial_severity,
     createdAt: data.created_at,
     updatedAt: data.updated_at,
+    aiImpact: data.ai_impact,
+    aiImpactReason: data.ai_impact_reason,
+    aiSeverity: data.ai_severity,
+    aiSeverityReason: data.ai_severity_reason,
   };
 }

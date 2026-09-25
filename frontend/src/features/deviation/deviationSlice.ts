@@ -46,7 +46,7 @@ export const runDeviationAnalysis = createAsyncThunk<AnalysisResult, {
     }
 );
 
-export const saveCurrentDeviation = createAsyncThunk<any, void, {
+export const saveCurrentDeviation = createAsyncThunk<DeviationResponse, void, {
   state: RootState; rejectValue: string;
 }>(
   "deviation/save", async (_, { getState, rejectWithValue }) => {
@@ -59,8 +59,12 @@ export const saveCurrentDeviation = createAsyncThunk<any, void, {
         return rejectWithValue(validationError);
       }
 
+      if (!state.aiDraft) {
+        return rejectWithValue("Analyze the deviation with AI before saving.");
+      }
+
       return await saveDeviation(
-        state.form, state.assessment
+        state.form, state.assessment,
       );
     } catch (error: any) {
       const message = error?.response?.data?.detail || 
@@ -144,6 +148,7 @@ const deviationSlice = createSlice({
         (state, action) => {
           state.isAnalyzing = false;
           state.aiDraft = action.payload.deviation;
+          state.form = action.payload.deviation;
           state.assessment = action.payload.assessment;
           state.error = null;
         }

@@ -53,21 +53,6 @@ export default function DeviationDashboard() {
 
   return (
     <div className="page">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-mark">
-            A
-          </div>
-          <div>
-            <strong>
-              AIVOA.AI
-            </strong>
-            <span>
-              Deviation Management
-            </span>
-          </div>
-        </div>
-      </header>
       <main className="content">
         <div className="page-header">
           <span className="eyebrow">

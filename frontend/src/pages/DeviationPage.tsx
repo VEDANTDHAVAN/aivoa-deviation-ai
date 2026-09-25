@@ -3,27 +3,13 @@ import AIAssistant
 
 import DeviationForm
   from "../components/deviation/DeviationForm";
+import { Link } from "react-router-dom";
 
 
 export default function DeviationPage() {
 
   return (
     <div className="page">
-      <header className="topbar">
-        <div className="brand">
-          <div className="brand-mark">
-            A
-          </div>
-          <div>
-            <strong>
-              AIVOA.AI
-            </strong>
-            <span>
-              Deviation Management
-            </span>
-          </div>
-        </div>
-      </header>
       <main className="content">
         <div className="page-header">
           <div>
@@ -37,6 +23,9 @@ export default function DeviationPage() {
               Capture, assess and review
               manufacturing deviations.
             </p>
+          </div>
+          <div className="page-actions">
+            <Link className="contextual-link" to="/">Back to Dashboard</Link>
           </div>
         </div>
 
