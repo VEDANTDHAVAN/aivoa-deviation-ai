@@ -400,6 +400,25 @@ button {
   animation: spin 0.7s linear infinite;
 }
 
+.success-box {
+  margin-top: 14px;
+  padding: 12px 14px;
+  border-radius: 9px;
+  background: #edf8f1;
+  color: #286b43;
+  font-size: 12px;
+}
+
+.success-box strong,
+.success-box span {
+  display: block;
+}
+
+.success-box span {
+  margin-top: 3px;
+  opacity: 0.8;
+}
+
 @keyframes spin {
   to {
     transform: rotate(360deg);
@@ -526,6 +545,89 @@ button {
 .severity-minor {
   background: #e7f5ec;
   color: #32764e;
+}
+
+.dashboard-toolbar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.search-input {
+  flex: 1;
+
+  border: 1px solid #dce1e8;
+  border-radius: 9px;
+
+  padding: 11px 12px;
+  outline: none;
+}
+
+.dashboard-toolbar select {
+  min-width: 160px;
+
+  border: 1px solid #dce1e8;
+  border-radius: 9px;
+
+  padding: 11px 12px;
+
+  background: white;
+}
+
+.table-wrapper {
+  overflow-x: auto;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+th {
+  text-align: left;
+
+  padding: 12px;
+
+  background: #f8f9fb;
+
+  color: #788294;
+
+  font-size: 10px;
+
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+td {
+  padding: 15px 12px;
+
+  border-top: 1px solid #edf0f4;
+
+  font-size: 13px;
+}
+
+td strong {
+  font-weight: 600;
+}
+
+.empty-state {
+  padding: 50px 20px;
+
+  text-align: center;
+
+  color: #7c8494;
+
+  font-size: 13px;
+}
+
+@media (max-width: 650px) {
+  .dashboard-toolbar {
+    flex-direction: column;
+  }
+
+  .dashboard-toolbar select {
+    width: 100%;
+  }
 }
 
 @media (max-width: 900px) {

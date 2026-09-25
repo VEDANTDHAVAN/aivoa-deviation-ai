@@ -1,15 +1,19 @@
 from typing import Annotated
 
-from fastapi import APIRouter, File, Form, HTTPException, UploadFile
+from fastapi import APIRouter, File, Form, HTTPException, UploadFile, Depends, Query
+from sqlalchemy.orm import Session
 
 from app.ai.graph import deviation_graph
 from app.services.document_parser import parse_document
+from app.db.database import get_db
+from app.api.schemas import DeviationCreate, DeviationResponse, DeviationUpdate
+from app.repositories.deviation_repository import create_deviation, get_deviation, get_deviations, update_deviation
 
 router = APIRouter(
     prefix="/api/deviations", tags=["Deviations"],
 )
 
-@router.post("analyze")
+@router.post("/analyze")
 async def analyze_deviation(
     text: Annotated[str | None, Form()] = None,
     file: UploadFile | None = File(default=None),
@@ -87,3 +91,50 @@ async def analyze_deviation(
                 ),
             },
         ) from exc
+
+@router.post("", response_model=DeviationResponse, status_code=201)
+def create_single_deviation(data: DeviationCreate, db: Session = Depends(get_db)):
+    return create_deviation(db, data)
+
+@router.get(
+    "", response_model=list[DeviationResponse],
+)
+def list_deviations(
+    limit: int = Query(
+        default=50, ge=1, le=100,
+    ),
+    offset: int = Query(
+        default=0, ge=0,
+    ), search: str | None = Query(default=None), severity: str | None = Query(default=None), site: str | None = Query(default=None), db: Session = Depends(get_db),
+):
+    return get_deviations(db=db, limit=limit, offset=offset, search=search, severity=severity, site=site)
+
+@router.get("/stats")
+def deviation_stats(db: Session = Depends(get_db)):
+    records = get_deviations(db=db, limit=100000)
+    return {"total": len(records), "critical": sum(r.initial_severity == "Critical" for r in records), "major": sum(r.initial_severity == "Major" for r in records), "minor": sum(r.initial_severity == "Minor" for r in records)}
+
+@router.get(
+    "/{deviation_id}", 
+    response_model=DeviationResponse,
+)
+def get_single_deviation(
+    deviation_id: int, db: Session = Depends(get_db),
+):
+    deviation = get_deviation(
+        db, deviation_id,
+    )
+
+    if deviation is None:
+        raise HTTPException(
+            status_code=404, detail="Deviation not found.",
+        )
+
+    return deviation
+
+@router.put("/{deviation_id}", response_model=DeviationResponse)
+def update_single_deviation(deviation_id: int, data: DeviationUpdate, db: Session = Depends(get_db)):
+    deviation = get_deviation(db, deviation_id)
+    if deviation is None:
+        raise HTTPException(status_code=404, detail="Deviation not found.")
+    return update_deviation(db, deviation, data)

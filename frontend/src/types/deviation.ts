@@ -12,6 +12,16 @@ export interface Deviation {
   initialSeverity: Severity | "";
 }
 
+export interface DeviationResponse extends Deviation {
+  id: number;
+  createdAt: string;
+  updatedAt: string;
+  aiImpact?: string | null;
+  aiImpactReason?: string | null;
+  aiSeverity?: Severity | null;
+  aiSeverityReason?: string | null;
+}
+
 export interface AIAssessment {
   impact: string;
   impact_reason: string;

@@ -1,5 +1,5 @@
 import { useAppDispatch, useAppSelector } from "../../app/hooks";
-
+import { saveCurrentDeviation } from "../../features/deviation/deviationSlice";
 import { updateField } from "../../features/deviation/deviationSlice";
 
 export default function DeviationForm() {
@@ -14,6 +14,14 @@ export default function DeviationForm() {
             field, value
         }));
     };
+
+    const isSaving = useAppSelector(
+        (state) => state.deviation.isSaving
+    );
+
+    const savedDeviationId = useAppSelector(
+        (state) => state.deviation.savedDeviationId
+    );
 
     return (
         <div className="deviation-form">
@@ -97,6 +105,21 @@ export default function DeviationForm() {
                 <option value="Minor">Minor</option>
             </select>
          </div>
+         <div className="form-actions">
+            <button className="primary-button" disabled={isSaving}
+             onClick={() => dispatch(saveCurrentDeviation())}
+            >
+                {isSaving ? "Saving..." : "Save Deviation"}
+            </button>
+         </div>
+         {
+            savedDeviationId && (
+                <div className="success-box">
+                    <strong>✓ Deviation saved successfully</strong>
+                    <span>Record ID: #{savedDeviationId}</span>
+                </div>
+            )
+         }
         </div>
     )
 }

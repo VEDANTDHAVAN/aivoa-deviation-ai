@@ -1,7 +1,8 @@
 import { createSlice, createAsyncThunk, type PayloadAction } from "@reduxjs/toolkit";
-import type { Deviation, AIAssessment, AnalysisResult } from "../../types/deviation";
-
-import { analyzeDeviation } from "../../services/deviationApi";
+import type { Deviation, AIAssessment, AnalysisResult, DeviationResponse } from "../../types/deviation";
+import type { RootState } from "../../app/store";
+import { analyzeDeviation, saveDeviation, getDeviations } from "../../services/deviationApi";
+import { validateDeviation } from "./validation";
 
 interface DeviationState {
     form: Deviation,
@@ -12,6 +13,9 @@ interface DeviationState {
     isAnalyzing: boolean,
     isSaving: boolean,
     error: string | null,
+    savedDeviationId: number | null,
+    deviations: DeviationResponse[],
+    isLoadingDeviations: boolean,
 }
 
 const initialState: DeviationState = {
@@ -22,6 +26,7 @@ const initialState: DeviationState = {
     },
     assessment: null, sourceText: "", selectedFileName: null,
     isAnalyzing: false, isSaving: false, error: null, aiDraft: null,
+    savedDeviationId: null, deviations: [], isLoadingDeviations: false,
 };
 
 export const runDeviationAnalysis = createAsyncThunk<AnalysisResult, {
@@ -39,6 +44,43 @@ export const runDeviationAnalysis = createAsyncThunk<AnalysisResult, {
             return rejectWithValue(String(message));
         }
     }
+);
+
+export const saveCurrentDeviation = createAsyncThunk<any, void, {
+  state: RootState; rejectValue: string;
+}>(
+  "deviation/save", async (_, { getState, rejectWithValue }) => {
+    try {
+      const state = getState().deviation;
+
+      const validationError = validateDeviation(state.form);
+
+      if (validationError) {
+        return rejectWithValue(validationError);
+      }
+
+      return await saveDeviation(
+        state.form, state.assessment
+      );
+    } catch (error: any) {
+      const message = error?.response?.data?.detail || 
+        error?.message || "Failed to save deviation.";
+      
+      return rejectWithValue(String(message));
+    }
+  }
+);
+
+export const fetchDeviations = createAsyncThunk<DeviationResponse[], void, { rejectValue: string; }>(
+  "deviation/fetchAll", async (_, { rejectWithValue }) => {
+    try {
+      return await getDeviations();
+    } catch (error: any) {
+      return rejectWithValue(
+        error?.response?.data?.detail || "Failed to load deviations."
+      );
+    }
+  }
 );
 
 const deviationSlice = createSlice({
@@ -105,14 +147,43 @@ const deviationSlice = createSlice({
           state.assessment = action.payload.assessment;
           state.error = null;
         }
-      )
-
-      .addCase(
+      ).addCase(
         runDeviationAnalysis.rejected,
         (state, action) => {
           state.isAnalyzing = false;
           state.error = action.payload ||
             "AI analysis failed.";
+        }
+      ).addCase(
+        saveCurrentDeviation.pending, (state) => {
+          state.isSaving = true;
+          state.error = null;
+        }
+      ).addCase(
+        saveCurrentDeviation.rejected, (state, action) => {
+          state.isSaving = false;
+          state.error = action.payload || "Failed to save deviation.";
+        }
+      ).addCase(
+        saveCurrentDeviation.fulfilled, (state, action) => {
+          state.isSaving = false;
+          state.savedDeviationId = action.payload.id;
+        }
+      ).addCase(
+        fetchDeviations.pending, (state) => {
+          state.isLoadingDeviations = true;
+          state.error = null;
+        }
+      ).addCase(
+        fetchDeviations.fulfilled, (state, action) => {
+          state.isLoadingDeviations = false;
+          state.deviations = action.payload;
+        }
+      ).addCase(
+        fetchDeviations.rejected, (state, action) => {
+          state.isLoadingDeviations = false;
+
+          state.error = action.payload || "Failed to load deviations.";
         }
       );
   },
